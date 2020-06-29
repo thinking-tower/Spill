@@ -8,8 +8,6 @@ export default function Draggable(props) {
     originalLeft: 0,
     newTop: 0,
     newLeft: 0,
-    width: 0,
-    height: 0
   });
   const [mousePosition, setMousePosition] = useState({
     screenX: null,
@@ -18,11 +16,10 @@ export default function Draggable(props) {
   const handleOnMouseDown = useCallback(
     e => {
       const { screenX, screenY } = e;
-      setMousePosition(prevMousePosition => ({
-        ...prevMousePosition,
+      setMousePosition({
         screenX,
         screenY
-      }));
+      });
       e.preventDefault();
       e.stopPropagation();
     },
@@ -30,58 +27,46 @@ export default function Draggable(props) {
   );
   const handleOnMouseMove = useCallback(
     e => {
-      const { screenX, screenY } = e;
-      if (mousePosition.screenX && mousePosition.screenY) {
-        setPosition(prevPosition => ({
-          ...prevPosition,
-          newTop: Math.max(
-            0,
-            screenY - mousePosition.screenY + prevPosition.originalTop
-          ),
-          newLeft: Math.max(
-            0,
-            screenX - mousePosition.screenX + prevPosition.originalLeft
-          )
-        }));
-      }
       e.preventDefault();
       e.stopPropagation();
+      if (!(mousePosition.screenX && mousePosition.screenY)) {
+        return;
+      }
+      const { screenX, screenY } = e;
+      const newTop = Math.max(0, screenY - mousePosition.screenY + position.originalTop);
+      const newLeft = Math.max(0, screenX - mousePosition.screenX + position.originalLeft);
+      setPosition((prevPosition) => ({
+        ...prevPosition,
+        newTop,
+        newLeft
+      }));
     },
-    [mousePosition, setPosition]
+    [mousePosition, position, setPosition]
   );
   const handleOnMouseUp = useCallback(
     e => {
-      if (mousePosition.screenX && mousePosition.screenY) {
-        const { screenX, screenY } = e;
-        setPosition(prevPosition => ({
-          ...prevPosition,
-          originalTop: Math.max(
-            0,
-            screenY - mousePosition.screenY + prevPosition.originalTop
-          ),
-          originalLeft: Math.max(
-            0,
-            screenX - mousePosition.screenX + prevPosition.originalLeft
-          ),
-          newTop: Math.max(
-            0,
-            screenY - mousePosition.screenY + prevPosition.originalTop
-          ),
-          newLeft: Math.max(
-            0,
-            screenX - mousePosition.screenX + prevPosition.originalLeft
-          )
-        }));
-        setMousePosition(prevMousePosition => ({
-          ...prevMousePosition,
-          screenX: null,
-          screenY: null
-        }));
-      }
       e.preventDefault();
       e.stopPropagation();
+      if (!(mousePosition.screenX && mousePosition.screenY)) {
+        return;
+      }
+      const { screenX, screenY } = e;
+      const originalTop = Math.max(0, screenY - mousePosition.screenY + position.originalTop);
+      const originalLeft = Math.max(0, screenX - mousePosition.screenX + position.originalLeft);
+      const newTop = Math.max(0, screenY - mousePosition.screenY + position.originalTop);
+      const newLeft = Math.max(0, screenX - mousePosition.screenX + position.originalLeft);
+      setPosition(({
+        originalTop,
+        originalLeft,
+        newTop,
+        newLeft 
+      }));
+      setMousePosition({
+        screenX: null,
+        screenY: null
+      });
     },
-    [mousePosition, setMousePosition, setPosition]
+    [mousePosition, setMousePosition, position, setPosition]
   );
 
   return (
