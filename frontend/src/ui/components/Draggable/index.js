@@ -81,15 +81,7 @@ export default function Draggable(props) {
       onMouseUp={handleOnMouseUp}
       onMouseLeave={handleOnMouseUp}
     >
-      {React.Children.map(children, child =>
-        React.cloneElement(child, {
-          className: child.props.className,
-          style: {
-            ...child.props.style,
-            zIndex: 0
-          }
-        })
-      )}
+      {children}
     </div>
   );
 }
