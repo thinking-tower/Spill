@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./Room.module.css";
 import Draggable from "../../components/Draggable";
+import CameraStream from "../../components/CameraStream";
 import VideoChatSpeakerScreen from "../../../assets/VideoChatSpeakerScreen.png";
 import MarinaUser from "../../../assets/MarinaUser.png";
 import CrystalUser from "../../../assets/CrystalUser.png";
@@ -18,14 +19,10 @@ export default function Room() {
   return (
     <div className={styles.container}>
       <div className={styles["main-stream"]}>
-        <img
-          style={{
-            width: "100%",
-            minHeight: "100%"
-          }}
-          src={VideoChatSpeakerScreen}
-          alt="VideoChatSpeakerScreen"
-        />
+        <CameraStream style={{
+          minWidth: "100%",
+          minHeight: "100%"
+        }}/>
       </div>
       <Draggable>
         <div
