@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+    frontend:
+        tty: true
+        build: ./frontend
+        command: npm run start
+        volumes:
+            - /frontend/node_modules
+            - ./frontend:/frontend
+        ports: 
+            - 3000:3000
