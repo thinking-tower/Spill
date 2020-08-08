@@ -8,7 +8,7 @@ var app = http.createServer((req, res) => {
     res.writeHead(404, {"Content-Type": "text/plain"});
     res.write("404 Not Found\n");
     res.end();
-}).listen(8080);
+}).listen(process.env.PORT || 8080);
 
 var io = require('socket.io').listen(app);
 // interface Message {
