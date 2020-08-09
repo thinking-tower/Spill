@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useParams } from "react-router-dom";
+import WebRTCWrapper from "../../../domain/WebRTCWrapper";
 import styles from "./Room.module.css";
 import Draggable from "../../components/Draggable";
 import CameraStream from "../../components/CameraStream";
-import MarinaUser from "../../../assets/MarinaUser.png";
-import CrystalUser from "../../../assets/CrystalUser.png";
-import NicolasUser from "../../../assets/NicolasUser.png";
 import Audio from "../../../assets/Audio.png";
 import Video from "../../../assets/Video.png";
 import ScreenShare from "../../../assets/ScreenShare.png";
@@ -14,14 +13,39 @@ import Game from "../../../assets/Game.png";
 import Web from "../../../assets/Web.png";
 import Exit from "../../../assets/Exit.png";
 
+
 export default function Room() {
+  const { id : roomId } = useParams();
+  const [ localStream, setLocalStream ] = useState(null);
+  const [ remoteStreams, setRemoteStreams ] = useState({});
+  const onLocalStream = useCallback((stream) => {
+    setLocalStream(stream);
+  }, [setLocalStream])
+  const onRemoteStream = useCallback((stream, fromSocketId) => {
+    setRemoteStreams((remoteStreams) => {
+      return {
+        ...remoteStreams, 
+        [fromSocketId]: stream
+      };
+    });
+  }, [remoteStreams, setRemoteStreams]);
+  const { current: webRTCWrapper } = useRef(WebRTCWrapper(onLocalStream, onRemoteStream));
+  useEffect(() => {
+    webRTCWrapper.login(roomId);
+    return () => {
+      webRTCWrapper.close();
+    }
+  }, [roomId]);
   return (
     <div className={styles.container}>
       <div className={styles["main-stream"]}>
-        <CameraStream style={{
-          minWidth: "100%",
-          minHeight: "100%"
-        }}/>
+        <CameraStream 
+          style={{
+            minWidth: "100%",
+            minHeight: "100%"
+          }}
+          stream={localStream}
+        />
       </div>
       <Draggable>
         <div
@@ -39,9 +63,18 @@ export default function Room() {
               justifyItems: "center"
             }}
           >
-            <img src={CrystalUser} alt="CrystalUser" />
-            <img src={MarinaUser} alt="MarinaUser" />
-            <img src={NicolasUser} alt="NicolasUser" />
+            {
+              Object.values(remoteStreams).map((remoteStream, i) => {
+                return <CameraStream 
+                  key={i}
+                  stream={remoteStream}
+                  style={{
+                    width: '200px',
+                    height: '200px'
+                  }}
+                />
+              })
+            }
           </div>
         </div>
       </Draggable>
