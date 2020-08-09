@@ -17,11 +17,6 @@ const peerConnectionConfig = {
             'stun:stun3.l.google.com:19302',
             'stun:stun4.l.google.com:19302'
         ]},
-        {
-            urls: ['turn:numb.viagenie.ca'],
-                credential: 'zrc!K4X4E54PKWJ',
-                username: 'tf.noob.dev@gmail.com'
-        }
     ]
   };
 
