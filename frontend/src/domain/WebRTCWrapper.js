@@ -10,8 +10,18 @@ interface Message {
 
 const peerConnectionConfig = {
     iceServers: [
-        {urls: 'stun:stun.stunprotocol.org:3478'},
-        {urls: 'stun:stun.l.google.com:19302'},
+        {urls: [
+            'stun:stun.l.google.com:19302', 
+            'stun:stun1.l.google.com:19302',
+            'stun:stun2.l.google.com:19302',
+            'stun:stun3.l.google.com:19302',
+            'stun:stun4.l.google.com:19302'
+        ]},
+        {
+            urls: ['turn:numb.viagenie.ca'],
+                credential: 'zrc!K4X4E54PKWJ',
+                username: 'tf.noob.dev@gmail.com'
+        }
     ]
   };
 
@@ -44,10 +54,13 @@ export default (
         const connection = new RTCPeerConnection(peerConnectionConfig);
         connection.onicecandidate = onIceCandidate;
         connection.ontrack = onTrack;
+        connection.onnegotiationneeded = (e) => {console.log(e)}
         return connection;
     };
     const onIceCandidate = (e) => {
+        console.log(e)
         if (e.candidate) {
+            // console.log(e.candidate)
             const connection = e.currentTarget;
             socket.emit('message', {
                 event: 'iceCandidate',
@@ -58,6 +71,13 @@ export default (
                     toSocketId: connection.fromSocketId
                 }
             });
+        }
+    };
+    const onIceConnectionStateChange = (e) => {
+        const connection = e.currentTarget;
+        console.log(connection)
+        if (connection.iceConnectionState === "failed"){
+            connection.restartIce();
         }
     };
     const onTrack = (e) => { 
@@ -73,6 +93,8 @@ export default (
                     const connection = createRTCPeerConnection();
                     participants[fromSocketId] = {
                         connection,
+                        iceCandidates: [],
+                        setRemoteDescription: false
                     }
                     stream.getTracks().forEach(track => participants[fromSocketId].connection.addTrack(track, stream));
                     participants[fromSocketId].connection.fromSocketId = fromSocketId;
@@ -104,12 +126,15 @@ export default (
                     const connection = createRTCPeerConnection();
                     participants[fromSocketId] = {
                         connection,
+                        iceCandidates: [],
+                        setRemoteDescription: false
                     }
                     stream.getTracks().forEach(track => participants[fromSocketId].connection.addTrack(track, stream));
                     participants[fromSocketId].connection.fromSocketId = fromSocketId;
                     participants[fromSocketId].connection.setRemoteDescription(new RTCSessionDescription(message.value.sdp))
                         .then(() => {
                             participants[fromSocketId].connection.createAnswer().then((description) => {
+                                participants[fromSocketId].setRemoteDescription = true
                                 connection.setLocalDescription(description)
                                     .then(() => {socket.emit('message', {
                                         event: 'answer',
@@ -136,16 +161,32 @@ export default (
             const fromSocketId = message.value.fromSocketId;
             if (participants) {
                 participants[fromSocketId].connection.setRemoteDescription(new RTCSessionDescription(message.value.sdp))
+                    .then((res) => {
+                        console.log(participants[fromSocketId].setRemoteDescription)
+                        participants[fromSocketId].setRemoteDescription = true
+                        if (participants[fromSocketId].iceCandidates.length > 0) {
+                            participants[fromSocketId].iceCandidates.forEach((iceCandidate) => {
+                                participants[fromSocketId].connection.addIceCandidate(iceCandidate)
+                                .catch((err) => console.log(err))
+                            });
+                        }
+                    })
                     .catch((err) => console.log(err))
             }
         }
         else if (message.event === 'iceCandidate') {
             const fromSocketId = message.value.fromSocketId;
             if (participants[fromSocketId]) {
-                participants[fromSocketId].connection.addIceCandidate(message.value.iceCandidate)
-                    .catch((err) => console.log(err))
+                if (participants[fromSocketId].setRemoteDescription){
+                    participants[fromSocketId].connection.addIceCandidate(message.value.iceCandidate)
+                    .then((res) => console.log("Adding ice candidate.")).catch((err) => console.log(err))
+                } else {
+                    participants[fromSocketId].iceCandidates.push(message.value.iceCandidate)
+                }
             }
         }
+        console.log(message)
+        console.log(participants)
     });
     const close = () => {
         socket.close();
